@@ -1,0 +1,23 @@
+name: Verify Android Studio download
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build-download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Check source files and build the extracted download
+        shell: bash
+        run: |
+          unzip -q Director-HelpDesk-Android-Studio.zip -d "$RUNNER_TEMP/helpdesk"
+          project="$RUNNER_TEMP/helpdesk/Director-HelpDesk"
+          for path in src app gradle AndroidManifest.xml settings.gradle build.gradle gradlew; do
+            diff -r --strip-trailing-cr "$path" "$project/$path"
+          done
+          cd "$project"
+          ./gradlew --no-daemon :app:assembleDebug
